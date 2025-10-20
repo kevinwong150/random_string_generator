@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Settings - Random String Generator</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="settings-container">
+    <h1>Settings</h1>
+    
+    <div class="setting-group">
+      <label for="lengthInput">String Length:</label>
+      <input type="number" id="lengthInput" min="1" max="1000" value="32">
+      <span class="hint">Number of characters (default: 32)</span>
+    </div>
+
+    <div class="setting-group">
+      <label for="seedInput">Seed (optional):</label>
+      <input type="text" id="seedInput" placeholder="Leave empty for random">
+      <span class="hint">Use a seed for reproducible random strings</span>
+    </div>
+
+    <div class="button-group">
+      <button id="saveBtn" class="save-btn">Save Settings</button>
+      <button id="resetBtn" class="reset-btn">Reset to Defaults</button>
+    </div>
+
+    <div id="saveNotification" class="notification hidden">Settings saved successfully!</div>
+  </div>
+  <script src="settings.js"></script>
+</body>
+</html>
