@@ -45,33 +45,63 @@ async function copyToClipboard(text) {
 }
 
 // Show notification
-function showNotification() {
-  const notification = document.getElementById('copyNotification');
+function showNotification(elementId) {
+  const notification = document.getElementById(elementId);
   notification.classList.remove('hidden');
   setTimeout(() => {
     notification.classList.add('hidden');
   }, 2000);
 }
 
+// Default settings
+const DEFAULT_SETTINGS = {
+  length: 32,
+  seed: ''
+};
+
+// Save settings
+async function saveSettings(length, seed) {
+  try {
+    await chrome.storage.sync.set({
+      length: parseInt(length),
+      seed: seed
+    });
+    return true;
+  } catch (err) {
+    console.error('Failed to save settings:', err);
+    return false;
+  }
+}
+
+// Load settings
+async function loadSettings() {
+  try {
+    const stored = await chrome.storage.sync.get(['length', 'seed']);
+    return {
+      length: stored.length || DEFAULT_SETTINGS.length,
+      seed: stored.seed !== undefined ? stored.seed : DEFAULT_SETTINGS.seed
+    };
+  } catch (err) {
+    console.error('Failed to load settings:', err);
+    return DEFAULT_SETTINGS;
+  }
+}
+
 // Initialize
 document.addEventListener('DOMContentLoaded', async () => {
   const generateBtn = document.getElementById('generateBtn');
   const resultDiv = document.getElementById('result');
-  const settingsLink = document.getElementById('settingsLink');
+  const settingsToggle = document.getElementById('settingsToggle');
+  const settingsPanel = document.getElementById('settingsPanel');
+  const lengthInput = document.getElementById('lengthInput');
+  const seedInput = document.getElementById('seedInput');
+  const saveBtn = document.getElementById('saveBtn');
+  const resetBtn = document.getElementById('resetBtn');
 
   // Load settings
-  let settings = {
-    length: 32,
-    seed: ''
-  };
-
-  try {
-    const stored = await chrome.storage.sync.get(['length', 'seed']);
-    if (stored.length) settings.length = stored.length;
-    if (stored.seed !== undefined) settings.seed = stored.seed;
-  } catch (err) {
-    console.log('Using default settings');
-  }
+  let settings = await loadSettings();
+  lengthInput.value = settings.length;
+  seedInput.value = settings.seed;
 
   // Generate button click handler
   generateBtn.addEventListener('click', async () => {
@@ -81,13 +111,46 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     const copied = await copyToClipboard(randomString);
     if (copied) {
-      showNotification();
+      showNotification('copyNotification');
     }
   });
 
-  // Settings link click handler
-  settingsLink.addEventListener('click', (e) => {
-    e.preventDefault();
-    chrome.runtime.openOptionsPage();
+  // Settings toggle click handler
+  settingsToggle.addEventListener('click', () => {
+    settingsPanel.classList.toggle('hidden');
+    settingsToggle.textContent = settingsPanel.classList.contains('hidden') ? 'Settings' : 'Hide Settings';
+  });
+
+  // Save button handler
+  saveBtn.addEventListener('click', async () => {
+    const length = lengthInput.value;
+    const seed = seedInput.value;
+    
+    if (length < 1 || length > 1000) {
+      alert('Length must be between 1 and 1000');
+      return;
+    }
+
+    const saved = await saveSettings(length, seed);
+    if (saved) {
+      // Update current settings
+      settings.length = parseInt(length);
+      settings.seed = seed;
+      showNotification('saveNotification');
+    }
+  });
+
+  // Reset button handler
+  resetBtn.addEventListener('click', async () => {
+    lengthInput.value = DEFAULT_SETTINGS.length;
+    seedInput.value = DEFAULT_SETTINGS.seed;
+    
+    const saved = await saveSettings(DEFAULT_SETTINGS.length, DEFAULT_SETTINGS.seed);
+    if (saved) {
+      // Update current settings
+      settings.length = DEFAULT_SETTINGS.length;
+      settings.seed = DEFAULT_SETTINGS.seed;
+      showNotification('saveNotification');
+    }
   });
 });
